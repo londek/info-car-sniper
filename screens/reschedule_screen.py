@@ -94,18 +94,13 @@ class RescheduleScreen(Screen):
 
         def do_reschedule():
             try:
-                # Perform reschedule
                 reservation_id = self.reservation['id']
                 self.session.reschedule_exam(reservation_id, self.new_exam.id)
 
-                time.sleep(3)
-
-                # Update UI with success state
                 old_ts = time.strptime(self.reservation['exam']['practice']['date'], "%Y-%m-%dT%H:%M:%S")
                 old_date_str = time.strftime("%Y-%m-%d %H:%M", old_ts)
                 new_date_str = self.new_exam.date.strftime("%Y-%m-%d %H:%M")
 
-                # Compute days saved
                 old_dt = datetime.strptime(self.reservation['exam']['practice']['date'], "%Y-%m-%dT%H:%M:%S")
                 new_dt = self.new_exam.date
                 saved_days = (old_dt - new_dt).days

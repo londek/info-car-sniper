@@ -196,8 +196,7 @@ class MainScreen(Screen):
                     ht = datetime.strptime(self.cfg.hour_to, "%H:%M").time()
 
                     earliest_matching_exam = None
-                    # if random.random() < 0.1:
-                    #     earliest_matching_exam = exams[0]
+
                     for exam in exams:
                         if (
                             df_dt <= exam.date <= dt_dt and
