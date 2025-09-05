@@ -8,7 +8,7 @@ Scanner and auto‑rebooker for practical exam slots at WORD (Info‑Car)
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue.svg?logo=python"></a>
 <a href="https://textual.textualize.io/"><img alt="Textual" src="https://img.shields.io/badge/TUI-Textual-6f42c1?logo=terminal"></a>
 <a href="#-contribution-"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
-<img alt="License" src="https://img.shields.io/badge/license-%3F-lightgrey">
+<img alt="License" src="https://img.shields.io/badge/license-GNU%20GPLv3-lightgrey">
 
 <p><sup>Languages: <a href="README.en.md">EN</a> | <a href="README.md">PL</a></sup></p>
 
