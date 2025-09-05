@@ -47,6 +47,16 @@ An intuitive terminal app that:
   - Ctrl+c — quit the app
 
 
+## 👀 Preview
+
+<div align="center">
+  <img src="assets/login.png" alt="Login screen" width="360" />
+  <img src="assets/main.png" alt="Main screen — scanning and stats" width="360" />
+  <br/>
+  <sub>Login • Main panel (scanning + stats)</sub>
+</div>
+
+
 ## 📋 Requirements
 
 - Python 3.10 or newer

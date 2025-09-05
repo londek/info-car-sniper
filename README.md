@@ -47,6 +47,15 @@ Intuicyjna aplikacja terminalowa, która:
   - Ctrl+c – wyjście z aplikacji
 
 
+## 👀 Podgląd
+
+<div align="center">
+  <img src="assets/login.png" alt="Ekran logowania" width="360" />
+  <img src="assets/main.png" alt="Ekran główny – skanowanie i statystyki" width="360" />
+  <br/>
+  <sub>Logowanie • Panel główny (skanowanie + statystyki)</sub>
+</div>
+
 ## 📋 Wymagania
 
 - Python 3.10 lub nowszy
