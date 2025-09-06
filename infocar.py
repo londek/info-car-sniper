@@ -169,7 +169,7 @@ class InfoCarSession:
     def _to_iso(self, d: datetime) -> str:
         return d.strftime("%Y-%m-%dT%H:%M:%S.000Z")
     
-    def is_reschedule_enabled_for_word(self, word_id: str, category='B') -> bool:
+    def is_reschedule_enabled_for_word(self, word_id: str) -> bool:
         if self.access_token == "":
             raise Exception("User is not authenticated")
         
@@ -178,38 +178,22 @@ class InfoCarSession:
                 'https': random.choice(self.proxies)
             })
 
-        self.ensure_alive_turnstile()
-        self.turnstile_uses += 1
-
-
-        today = datetime.utcnow().date()
-
-        req_data = json.dumps({
-            "category": category,
-            "endDate": self._to_iso(today + timedelta(days=60)),
-            "startDate": self._to_iso(today),
-            "wordId": word_id
-        })
-
-        resp = self.session.put(
-            "https://info-car.pl/api/word/word-centers/exam-schedule",
+        resp = self.session.get(
+            f"https://info-car.pl/api/word/word-centers/reschedule-enabled/{word_id}",
             headers={
                 "Authorization": f"Bearer {self.access_token}",
                 "Accept-Language": "pl-PL",
-                "X-CF-Turnstile": self.turnstile_token,
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0",
                 "Content-Type": "application/json",
                 "Origin": "https://info-car.pl",
-                "Content-Length": str(len(req_data))
             },
-            data=req_data
         )
 
         if resp.status_code != 200:
             raise Exception(f"Request failed with status code {resp.status_code}: {resp.text}")
 
         data = resp.json()
-        return data.get('isRescheduleReservation', False)
+        return data.get('rescheduleEnabled', False)
 
     def get_exams(self, exam_type, word_id, category="B") -> list[Exam]:
         if self.access_token == "":
