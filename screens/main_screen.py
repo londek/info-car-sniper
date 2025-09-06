@@ -170,7 +170,7 @@ class MainScreen(Screen):
                                 raise e
                             
                             self.app.call_from_thread(self.last_error_panel.update, f"[red]{str(e)}[/red]")
-                            time.sleep(1)
+                            time.sleep(3)
                             continue
 
                     earliest_time = exams[0].date
