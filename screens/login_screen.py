@@ -12,6 +12,7 @@ import threading
 
 from capmonster_provider import CapmonsterProvider
 from infocar import InfoCarSession
+from app_state import AppState
 from config_manager import AppConfig, load_config, save_config
 
 from widgets.spinner import Spinner
@@ -311,7 +312,15 @@ class LoginScreen(Screen):
 
                 self.app.call_from_thread(ticker_text.update, "Logging in to Info-Car…")
 
-                infocar_session = InfoCarSession(capmonster.value, proxies=proxies)
+                # Reuse existing session if available; otherwise create new
+                app_state: AppState = getattr(self.app, "state", AppState())
+                if app_state.session is None:
+                    app_state.session = InfoCarSession(capmonster.value, proxies=proxies)
+                else:
+                    # Update capmonster key/proxies if changed
+                    app_state.session.capmonster = app_state.session.capmonster.__class__(api_key=capmonster.value)
+                    app_state.session.proxies = proxies
+                infocar_session = app_state.session
                 infocar_session.login(username.value, password.value)
 
                 self.app.call_from_thread(ticker_text.update, "Fetching reservations…")
@@ -334,6 +343,9 @@ class LoginScreen(Screen):
                     hour_to=hour_to,
                 )
                 save_config(cfg)
+                # Persist in global state
+                app_state.cfg = cfg
+                app_state.reservation = reservation
 
                 self.app.call_from_thread(self.app.switch_screen, MainScreen(session=infocar_session, cfg=cfg, reservation=reservation))
             except Exception as e:

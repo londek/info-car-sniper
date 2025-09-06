@@ -19,6 +19,7 @@ from widgets.spinner import Spinner
 from widgets.stat_panel import StatPanel
 from constants import FUNNY_TICKER_WAITING_TEXTS
 from screens.reschedule_screen import RescheduleScreen
+from app_state import AppState
 
 class MainScreen(Screen):
     BINDINGS = [
@@ -78,11 +79,7 @@ class MainScreen(Screen):
         self.running = False
         self.poll_thread = None
         self._ticker_timer = None
-
-        self.all_checks = 0
-        self.earliest_ever_time = None
-        self.current_earliest_time = None
-        self.last_found_time = None
+        self.stats = None
 
     def compose(self) -> ComposeResult:
         reservation_date = time.strptime(self.reservation['exam']['practice']['date'], "%Y-%m-%dT%H:%M:%S")
@@ -116,6 +113,14 @@ class MainScreen(Screen):
 
     def on_mount(self) -> None:
         self.last_error_panel = self.query_one("#last_error")
+        # Attach shared state
+        app_state: AppState = getattr(self.app, "state")
+        self.stats = app_state.stats
+        # If re-entered, prefer persisted cfg/reservation if available
+        if getattr(app_state, "cfg", None) is not None:
+            self.cfg = app_state.cfg  # type: ignore
+        if getattr(app_state, "reservation", None) is not None:
+            self.reservation = app_state.reservation
 
         self.running = True
         self.update_panels()
@@ -178,17 +183,17 @@ class MainScreen(Screen):
                         if exam.date < earliest_time:
                             earliest_time = exam.date
 
-                    self.all_checks += 1
+                    self.stats.all_checks += 1
 
-                    if self.earliest_ever_time is None or earliest_time < self.earliest_ever_time:
-                        self.earliest_ever_time = earliest_time
-                        self.current_earliest_time = earliest_time
-                        self.last_found_time = earliest_time
-                    elif earliest_time < self.last_found_time:
-                        self.last_found_time = earliest_time
-                        self.current_earliest_time = earliest_time
+                    if self.stats.earliest_ever_time is None or earliest_time < self.stats.earliest_ever_time:
+                        self.stats.earliest_ever_time = earliest_time
+                        self.stats.current_earliest_time = earliest_time
+                        self.stats.last_found_time = earliest_time
+                    elif self.stats.last_found_time is None or earliest_time < self.stats.last_found_time:
+                        self.stats.last_found_time = earliest_time
+                        self.stats.current_earliest_time = earliest_time
                     else:
-                        self.last_found_time = earliest_time
+                        self.stats.last_found_time = earliest_time
 
                     df_dt = datetime.strptime(self.cfg.date_from, "%Y-%m-%d")
                     dt_dt = datetime.strptime(self.cfg.date_to, "%Y-%m-%d")
@@ -233,8 +238,22 @@ class MainScreen(Screen):
         current_earliest_panel: StatPanel = self.query_one("#current_earliest")
         last_found_panel: StatPanel = self.query_one("#last_found")
 
-        turn_panel.update_value(f"{self.session.turnstile_solve_count} (~${self.session.turnstile_solve_count * 1.2 / 1000:.3f})")
-        all_checks_panel.update_value(str(self.all_checks))
-        earliest_ever_panel.update_value(self.earliest_ever_time.strftime("%Y-%m-%d %H:%M") if self.earliest_ever_time is not None else "-")
-        current_earliest_panel.update_value(self.current_earliest_time.strftime("%Y-%m-%d %H:%M") if self.current_earliest_time is not None else "-")
-        last_found_panel.update_value(self.last_found_time.strftime("%Y-%m-%d %H:%M") if self.last_found_time is not None else "-")
+        turn_panel.update_value(
+            f"{self.session.turnstile_solve_count} (~${self.session.turnstile_solve_count * 1.2 / 1000:.3f})"
+        )
+        all_checks_panel.update_value(str(self.stats.all_checks))
+        earliest_ever_panel.update_value(
+            self.stats.earliest_ever_time.strftime("%Y-%m-%d %H:%M")
+            if self.stats.earliest_ever_time is not None
+            else "-"
+        )
+        current_earliest_panel.update_value(
+            self.stats.current_earliest_time.strftime("%Y-%m-%d %H:%M")
+            if self.stats.current_earliest_time is not None
+            else "-"
+        )
+        last_found_panel.update_value(
+            self.stats.last_found_time.strftime("%Y-%m-%d %H:%M")
+            if self.stats.last_found_time is not None
+            else "-"
+        )

@@ -4,6 +4,7 @@ from textual.app import App
 from textual.binding import Binding
 from config_manager import load_config
 from screens.login_screen import LoginScreen
+from app_state import AppState
 
 class InfoCarApp(App):
     TITLE = "Info-Car Looker"
@@ -34,6 +35,8 @@ class InfoCarApp(App):
     """
 
     def on_mount(self) -> None:
+        self.state = AppState()
+        
         cfg = load_config()
         if cfg.username and cfg.password and cfg.capmonster_key:
             self.push_screen(LoginScreen(auto_login=True))
