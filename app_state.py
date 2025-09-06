@@ -26,3 +26,4 @@ class AppState:
     # Optional convenience holders
     reservation: Optional[dict[str, Any]] = None
     cfg: Optional["AppConfig"] = None
+    started_checking_at: Optional[datetime] = None

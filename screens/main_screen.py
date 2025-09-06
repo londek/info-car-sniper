@@ -7,7 +7,7 @@ from textual.containers import Container, Center, Horizontal
 from textual.widgets import Static
 import playsound3
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import threading
 import random
@@ -41,6 +41,11 @@ class MainScreen(Screen):
             width: auto;
             content-align: center middle;
             align: center middle;
+        }
+
+        #searching_for {
+            text-style: bold;
+            color: cyan;
         }
 
         #last_error {
@@ -83,8 +88,10 @@ class MainScreen(Screen):
 
     def compose(self) -> ComposeResult:
         reservation_date = time.strptime(self.reservation['exam']['practice']['date'], "%Y-%m-%dT%H:%M:%S")
-        
+        searching_for_text = self._compute_elapsed_text_safe()
+
         main_container = Container(
+            Center(Static(f"Searching for {searching_for_text}", id="searching_for")),
             StatPanel("Turnstile usage", id="turnstile"),
             StatPanel("All checks", id="all_checks"),
             StatPanel("Earliest ever exam date", id="earliest_ever"),
@@ -116,11 +123,21 @@ class MainScreen(Screen):
         # Attach shared state
         app_state: AppState = getattr(self.app, "state")
         self.stats = app_state.stats
+        
         # If re-entered, prefer persisted cfg/reservation if available
         if getattr(app_state, "cfg", None) is not None:
             self.cfg = app_state.cfg  # type: ignore
         if getattr(app_state, "reservation", None) is not None:
             self.reservation = app_state.reservation
+
+        try:
+            if app_state.started_checking_at is None:
+                app_state.started_checking_at = datetime.now()
+
+            searching_for = self._compute_elapsed_text_safe()
+            self.query_one("#searching_for", Static).update(f"Searching for {searching_for}")
+        except Exception:
+            pass
 
         self.running = True
         self.update_panels()
@@ -136,6 +153,8 @@ class MainScreen(Screen):
                 pass
 
         self._ticker_timer = self.set_interval(15.0, _rotate_ticker_text_event)
+        # Also update elapsed banner every 10s
+        self.set_interval(10.0, self._update_elapsed_banner)
 
     def on_unmount(self) -> None:
         if self._ticker_timer is not None:
@@ -257,3 +276,43 @@ class MainScreen(Screen):
             if self.stats.last_found_time is not None
             else "-"
         )
+
+    def _compute_elapsed_text_safe(self) -> str:
+        """Compute short elapsed time like '5m' or '3h10m' since checking started."""
+        try:
+            app_state: AppState = getattr(self.app, "state")
+            if app_state.started_checking_at is None:
+                return "0m"
+            delta = datetime.now() - app_state.started_checking_at
+            if delta.total_seconds() < 0:
+                return "0m"
+            return self._format_timedelta_short(delta)
+        except Exception:
+            return "0m"
+
+    def _update_elapsed_banner(self) -> None:
+        try:
+            elapsed = self._compute_elapsed_text_safe()
+            self.query_one("#searching_for", Static).update(f"Searching for ({elapsed})")
+        except Exception:
+            pass
+
+    @staticmethod
+    def _format_timedelta_short(td: timedelta) -> str:
+        total = int(td.total_seconds())
+        if total <= 0:
+            return "0m"
+        days, rem = divmod(total, 86400)
+        hours, rem = divmod(rem, 3600)
+        minutes, _ = divmod(rem, 60)
+
+        if days > 0:
+            # Show up to 2 units: days and hours
+            if hours > 0:
+                return f"{days}d{hours}h"
+            return f"{days}d"
+        if hours > 0:
+            if minutes > 0:
+                return f"{hours}h{minutes}m"
+            return f"{hours}h"
+        return f"{minutes}m"
